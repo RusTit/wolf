@@ -11,12 +11,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "binance-api-node": "^0.5.0",
-    "dotenv": "^4.0.0",
-    "node-binance-api": "^0.3.6",
-    "ora": "^2.1.0"
+    "binance-api-node": "^0.8.20",
+    "dotenv": "^7.0.0",
+    "ora": "^3.2.0"
   },
   "devDependencies": {
-    "mocha": "^4.1.0"
+    "mocha": "^6.0.2"
   }
 }
