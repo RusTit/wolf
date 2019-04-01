@@ -6,7 +6,6 @@ const Watchlist = require('./Watchlist.js');
 const logger = require('./Logger.js')('Wolf');
 const fs = require('fs');
 const assert = require('assert');
-const ora = require('ora');
 
 module.exports = class Wolf {
     constructor(config) {
