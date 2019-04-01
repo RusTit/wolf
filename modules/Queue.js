@@ -1,7 +1,7 @@
 const binance = require('./binance.js');
 const assert = require('assert');
 const Ledger = require('./Ledger.js');
-
+const logger = require('./Logger')('Queue');
 /*
 
 <--- Wolf.js --->
@@ -21,7 +21,6 @@ init() {
 module.exports = class Queue {
     constructor(config) {
         this.tradingPair = config.tradingPair;
-        this.logger = config.logger;
         this.ledger = null;
         this.meta = {
             queue: {},
@@ -42,7 +41,7 @@ module.exports = class Queue {
             this.meta.queue[txn.orderId] = txn;
             return true;
         } catch(err) {
-            console.log('QUEUE ERROR: ', err);
+            logger.warn(`QUEUE ERROR: ${err}`);
             return false;
         }
     }
@@ -82,11 +81,11 @@ module.exports = class Queue {
                     } else {
                         meta.sellCount += 1;
                     }
-                    this.logger.success(side + ': ' + txn.executedQty + ' ' + txn.symbol + ' @ ' + txn.price)
+                    logger.info(side + ': ' + txn.executedQty + ' ' + txn.symbol + ' @ ' + txn.price)
                     this.ledger.write(Date.now(), txn.symbol, txn.side, txn.executedQty, txn.price);
                 }
             } catch(err) {
-                console.log('QUEUE ERROR: ', err.message);
+                logger.warn(`QUEUE ERROR: ${err.message}`);
             }
         }
         Object.keys(filledTxns).forEach((orderId) => {

@@ -10,6 +10,7 @@
         watchlist.init();
     }
 */
+const logger = require('./Logger')('Watchlist');
 
 module.exports = class Watchlist {
     constructor(config) {
@@ -17,7 +18,6 @@ module.exports = class Watchlist {
         this.state = config.state;
         this.ticker = config.ticker;
         this.wolf = config.wolf;
-        this.logger = config.logger;
         this.meta = {
             watchlist: {}
         }
@@ -48,16 +48,16 @@ module.exports = class Watchlist {
             let shouldSell = false;
             if (currentPrice >= (orderPrice + (orderPrice * config.profitPercentage))) shouldSell = true;                         //profit percentage trigger
             if (state.paranoid && (currentPrice <= orderPrice + (orderPrice * config.profitLockPercentage))) {              //profit lock trigger
-                console.log(' [ALARM]::: Price dipped below PROFIT_LOCK_PERCENTAGE while in paranoid mode. Selling.');
+                logger.info(' [ALARM]::: Price dipped below PROFIT_LOCK_PERCENTAGE while in paranoid mode. Selling.');
                 state.profitLockPercentageMet = true;  //used for mocha testing
                 shouldSell = true;
             }
             if (config.profitLockPercentage && (currentPrice >= orderPrice + (orderPrice * config.profitLockPercentage))) { //profit lock trigger
-                console.log(' [ALARM]::: PROFIT_LOCK_PERCENTAGE REACHED. Now in paranoid mode.')
+                logger.info(' [ALARM]::: PROFIT_LOCK_PERCENTAGE REACHED. Now in paranoid mode.')
                 state.paranoid = true;
             }
             if (config.stopLimitPercentage && (currentPrice <= orderPrice - (orderPrice * config.stopLimitPercentage))) {   //stop limit trigger
-                console.log(' [ALARM]::: STOP_LIMIT_PERCENTAGE REACHED. Exiting position.');
+                logger.info(' [ALARM]::: STOP_LIMIT_PERCENTAGE REACHED. Exiting position.');
                 state.stopLimitPercentageMet = true;
                 shouldSell = true;
             }

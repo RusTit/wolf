@@ -14,6 +14,8 @@ init() {
 
 */
 
+const logger = require('./Logger')('Ledger');
+
 module.exports = class Ledger {
 	constructor(config) {
 		this.filename = config.filename;
@@ -30,7 +32,7 @@ module.exports = class Ledger {
 			if (!this.exists()) fs.appendFileSync(this.file, 'date,pair,side,amount,price,testing\n');
 			return true;
 		} catch(err) {
-			console.log('LEDGER ERROR: ', err.message);
+			logger.error(`LEDGER ERROR: ${err.message}`);
 			return false;
 		}
 	}

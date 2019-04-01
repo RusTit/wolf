@@ -12,7 +12,9 @@
   "license": "ISC",
   "dependencies": {
     "binance-api-node": "^0.8.20",
+    "config": "^3.0.1",
     "dotenv": "^7.0.0",
+    "log4js": "^4.1.0",
     "ora": "^3.2.0"
   },
   "devDependencies": {

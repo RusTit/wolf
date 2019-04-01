@@ -3,7 +3,7 @@ const Symbol = require('./Symbol.js');
 const Ticker = require('./Ticker.js');
 const Queue = require('./Queue.js');
 const Watchlist = require('./Watchlist.js');
-const Logger = require('./Logger.js');
+const logger = require('./Logger.js')('Wolf');
 const fs = require('fs');
 const assert = require('assert');
 const ora = require('ora');
@@ -15,7 +15,6 @@ module.exports = class Wolf {
         this.ticker = null; //bid/ask prices updated per tick
         this.queue = null; //queue for unfilled transactions
         this.watchlist = null; //orderId --> filledTransactions map; as well as length
-        this.logger = null; //terminal logging system w/ dank emojis
         this.state = {
             consuming: false,
             killed: false,
@@ -29,16 +28,13 @@ module.exports = class Wolf {
     }
 
     async init() {
-        //setup/start logger
-        this.logger = new Logger();
-        this.logger.init();
 
         //get trading pair information
         this.symbol = new Symbol({ tradingPair: this.config.tradingPair });
         await this.symbol.init();
 
         //setup/start queue
-        this.queue = new Queue({ tradingPair: this.config.tradingPair, logger: this.logger });
+        this.queue = new Queue({ tradingPair: this.config.tradingPair });
         this.queue.init();
 
         //setup ticker
@@ -55,7 +51,6 @@ module.exports = class Wolf {
             config: this.config,
             state: this.state,
             ticker: this.ticker,
-            logger: this.logger,
             wolf: this
         };
         this.watchlist = new Watchlist(watchlistConfig);
@@ -74,15 +69,19 @@ module.exports = class Wolf {
         this.purchase();
     }
 
+    static LogStats(stats) {
+        const newStats = 'Queue: ' + (Number(stats.queueCount) || 0) + ' Watchlist: ' + (Number(stats.watchCount) || 0);
+        logger.info(newStats);
+    }
+
     //digest the queue of open buy/sell orders
     async consume() {
         const state = this.state;
-        const logger = this.logger;
         if (state.killed) return;
         if (state.consuming) return;
 
         state.consuming = true;
-        logger.status({ queueCount: this.queue.meta.length, watchCount: this.watchlist.meta.length });
+        Wolf.LogStats({ queueCount: this.queue.meta.length, watchCount: this.watchlist.meta.length });
         const filledTransactions = await this.queue.digest();
 
         //populate watchlist with filled BUY orders and compound ALL filled orders if necessary
@@ -92,7 +91,7 @@ module.exports = class Wolf {
             const price = Number(txn.price);
             this.compound(side, price);
             if (side === 'BUY') this.watchlist.add(orderId, txn);
-            logger.status({ queueCount: this.queue.meta.length,  watchCount: this.watchlist.meta.length });
+            Wolf.LogStats({ queueCount: this.queue.meta.length, watchCount: this.watchlist.meta.length });
             if (!state.stopLimitPercentageMet && side === 'SELL') this.hunt();
         }
 
@@ -103,8 +102,7 @@ module.exports = class Wolf {
 
     //calculate quantity of coin to purchase based on given budget from .env
     calculateQuantity() {
-        const logger = this.logger;
-        logger.success('Calculating quantity... ');
+        logger.info('Calculating quantity... ');
         const symbol = this.symbol.meta;
         const minQuantity = symbol.minQty;
         const maxQuantity = symbol.maxQty;
@@ -120,7 +118,7 @@ module.exports = class Wolf {
 
         assert(quantity >= minQuantity && quantity <= maxQuantity, 'invalid quantity');
 
-        logger.success('Quantity Calculated: ' + quantity.toFixed(quantitySigFig));
+        logger.info('Quantity Calculated: ' + quantity.toFixed(quantitySigFig));
         return quantity.toFixed(quantitySigFig);
     }
 
@@ -139,7 +137,7 @@ module.exports = class Wolf {
             };
             const unconfirmedPurchase = await binance.order(buyOrder);
             this.queue.push(unconfirmedPurchase);
-            this.logger.success('Purchasing... ' + unconfirmedPurchase.symbol);
+            logger.info('Purchasing... ' + unconfirmedPurchase.symbol);
         } catch(err) {
             console.log('PURCHASE ERROR: ', err);
             return false;
@@ -161,7 +159,7 @@ module.exports = class Wolf {
             };
             const unconfirmedSell = await binance.order(sellOrder);
             this.queue.push(unconfirmedSell);
-            this.logger.success('Selling...' + unconfirmedSell.symbol);
+            logger.info('Selling...' + unconfirmedSell.symbol);
         } catch(err) {
             console.log('SELL ERROR: ', err.message);
             return false;
@@ -172,7 +170,7 @@ module.exports = class Wolf {
         if (!this.config.compound) return;
         if (side === 'BUY') this.state.netSpend -= price;
         if (side === 'SELL') this.state.netSpend += price;
-        this.logger.success('Compounding...' + this.state.netSpend);
+        logger.info('Compounding...' + this.state.netSpend);
     }
 
     async kill() {
@@ -181,10 +179,9 @@ module.exports = class Wolf {
             const meta = this.queue.meta;
             const queue = meta.queue;
             const length = meta.length;
-            const logger = this.logger;
             let counter = 0;
 
-            logger.success(`Cancelling ${length} open orders created by W.O.L.F`);
+            logger.info(`Cancelling ${length} open orders created by W.O.L.F`);
             for (let orderId in queue) {
                 const orderToCancel = queue[orderId];
                 await binance.cancelOrder({
@@ -193,7 +190,7 @@ module.exports = class Wolf {
                 });
                 counter++;
             }
-            logger.success(`Cancelled ${counter} opened orders created by W.O.L.F`);
+            logger.info(`Cancelled ${counter} opened orders created by W.O.L.F`);
 
             return true;
         } catch(err) {
