@@ -36,9 +36,9 @@ describe('Symbol', function() {
             try {
                 setTimeout(() => {
                     assert(symbol.meta);
-                    assert(symbol.meta.minPrice && typeof symbol.meta.minPrice === 'number');
-                    assert(symbol.meta.maxPrice && typeof symbol.meta.maxPrice === 'number');
-                    assert(symbol.meta.tickSize && typeof symbol.meta.tickSize === 'number');
+                    assert(typeof symbol.meta.minPrice === 'number');
+                    assert(typeof symbol.meta.maxPrice === 'number');
+                    assert(typeof symbol.meta.tickSize === 'number');
                     assert(symbol.meta.minQty && typeof symbol.meta.minQty === 'number');
                     assert(symbol.meta.maxQty && typeof symbol.meta.maxQty === 'number');
                     assert(symbol.meta.stepSize && typeof symbol.meta.stepSize === 'number');
