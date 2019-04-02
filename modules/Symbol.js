@@ -26,11 +26,15 @@ module.exports = class Symbol {
     async init() {
         try {
             const exchangeInfo = await binance.exchangeInfo();
-            exchangeInfo.symbols.forEach((symbol) => {
-                if (symbol.symbol === this.tradingPair) {
-                    return this.meta = Object.assign(this.getters(), symbol);
+            const symbol = exchangeInfo.symbols.find(symbol => symbol.symbol === this.tradingPair);
+            if (symbol) {
+                this.meta = Object.assign(this.getters(), symbol);
+                this.meta.prototype.filterByType = (filterType) => {
+                    return this.filters.find(filter => filter.filterType === filterType);
                 }
-            });
+            } else {
+                logger.warn(`Trading Pair (${this.tradingPair}) wasn't found in exchange info`);
+            }
             return true;
         } catch(err) {
             logger.warn(`SYMBOL ERROR: ${err.message}`);
@@ -40,17 +44,18 @@ module.exports = class Symbol {
 
     getters() {
         return {
-            get minPrice() { return Number(this.filters[0].minPrice) },
-            get maxPrice() { return Number(this.filters[0].maxPrice) },
-            get tickSize() { return Number(this.filters[0].tickSize) },
-            get minQty() { return Number(this.filters[2].minQty) },
-            get maxQty() { return Number(this.filters[2].maxQty) },
-            get stepSize() { return Number(this.filters[2].stepSize) },
-            get priceSigFig() { return Number(this.filters[0].tickSize.indexOf('1') - 1) },
+            get minPrice() { return Number(this.filterByType('PRICE_FILTER').minPrice) },
+            get maxPrice() { return Number(this.filterByType('PRICE_FILTER').maxPrice) },
+            get tickSize() { return Number(this.filterByType('PRICE_FILTER').tickSize) },
+            get minQty() { return Number(this.filterByType('LOT_SIZE').minQty) },
+            get maxQty() { return Number(this.filterByType('LOT_SIZE').maxQty) },
+            get stepSize() { return Number(this.filterByType('LOT_SIZE').stepSize) },
+            get priceSigFig() { return Number(this.filterByType('PRICE_FILTER').tickSize.indexOf('1') - 1) },
             get quantitySigFig() {
-                const sf = Number(this.filters[2].stepSize.indexOf('1') - 1);
+                const sf = Number(this.filterByType('LOT_SIZE').stepSize.indexOf('1') - 1);
                 return sf >= 0 ? sf : 0;
-            }
+            },
+            get minNotional() { return Number(this.filterByType('MIN_NOTIONAL').minNotional) }
         }
     }
 };

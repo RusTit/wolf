@@ -110,6 +110,11 @@ module.exports = class Wolf {
         const currentPrice = this.ticker.meta.ask;
         const budget = this.config.budget + this.state.compound;
 
+        // https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#min_notional
+        if (budget < symbol.minNotional) {
+            logger.warn(`Budget (${budget}) must be greater than MIN_NOTIONAL (${symbol.minNotional})`);
+        }
+
         let quantity = minQuantity;
         while (quantity * currentPrice <= budget) quantity += stepSize;
         if (quantity * currentPrice > budget) quantity -= stepSize;
