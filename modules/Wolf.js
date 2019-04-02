@@ -8,7 +8,7 @@ const fs = require('fs');
 const assert = require('assert');
 
 module.exports = class Wolf {
-    constructor(config) {
+    constructor(config, shouldInit = true) {
         this.config = config;
         this.symbol = null; //meta information about trading pair
         this.ticker = null; //bid/ask prices updated per tick
@@ -23,7 +23,9 @@ module.exports = class Wolf {
             stopLimitPercentageMet: false,
             get compound() { return this.netSpend <= 0 ? 0 : this.netSpend }
         };
-        this.init();
+        if (shouldInit) {
+            this.init();
+        }
     }
 
     async init(hunt = true) {
@@ -204,7 +206,7 @@ module.exports = class Wolf {
             if (err.message === 'UNKNOWN_ORDER') {
                 return false;
             }
-            console.log('KILL ERROR: ', err.message);
+            logger.error('KILL ERROR: ', err.message);
             return false;
         }
     }

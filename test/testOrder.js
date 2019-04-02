@@ -15,7 +15,7 @@ describe('testOrder', function() {
     it('should be able to place testOrder', (done) => {
         (async() => {
             try {
-                Wolf.prototype.purchase = async () => {
+                Wolf.prototype.purchase = async function(price) {
                     const symbol = this.symbol.meta;
                     const tickSize = symbol.tickSize;  //minimum price difference you can trade by
                     const priceSigFig = symbol.priceSigFig;
@@ -27,11 +27,12 @@ describe('testOrder', function() {
                         price: (price && price.toFixed(priceSigFig)) || (this.ticker.meta.ask).toFixed(priceSigFig)
                     };
                     const unconfirmedPurchase = await binance.orderTest(buyOrder);
-                    this.queue.push(unconfirmedPurchase);
+                    console.log(unconfirmedPurchase);
                 };
-                const wolf = new Wolf(config);
+                const wolf = new Wolf(config, false);
                 await wolf.init(false);
-
+                await wolf.purchase();
+                await wolf.kill();
                 done();
             } catch(err) {
                 throw new Error(err);
