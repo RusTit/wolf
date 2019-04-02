@@ -29,9 +29,6 @@ module.exports = class Symbol {
             const symbol = exchangeInfo.symbols.find(symbol => symbol.symbol === this.tradingPair);
             if (symbol) {
                 this.meta = Object.assign(this.getters(), symbol);
-                this.meta.prototype.filterByType = (filterType) => {
-                    return this.filters.find(filter => filter.filterType === filterType);
-                }
             } else {
                 logger.warn(`Trading Pair (${this.tradingPair}) wasn't found in exchange info`);
             }
@@ -55,7 +52,10 @@ module.exports = class Symbol {
                 const sf = Number(this.filterByType('LOT_SIZE').stepSize.indexOf('1') - 1);
                 return sf >= 0 ? sf : 0;
             },
-            get minNotional() { return Number(this.filterByType('MIN_NOTIONAL').minNotional) }
+            get minNotional() { return Number(this.filterByType('MIN_NOTIONAL').minNotional) },
+            filterByType(filterType) {
+                return this.filters.find(filter => filter.filterType === filterType);
+            }
         }
     }
 };
