@@ -152,7 +152,7 @@ module.exports = class Wolf {
             this.queue.push(unconfirmedPurchase);
             logger.info('Purchasing... ' + unconfirmedPurchase.symbol);
         } catch(err) {
-            console.log('PURCHASE ERROR: ', err);
+            logger.error(`PURCHASE ERROR: ${err}`);
             return false;
         }
     }
@@ -172,10 +172,11 @@ module.exports = class Wolf {
                 price: profit.toFixed(priceSigFig)
             };
             const unconfirmedSell = await binance.order(sellOrder);
+            logger.debug(`${JSON.stringify(unconfirmedSell)}`);
             this.queue.push(unconfirmedSell);
             logger.info('Selling...' + unconfirmedSell.symbol);
         } catch(err) {
-            console.log('SELL ERROR: ', err.message);
+            logger.error(`SELL ERROR: ${err.message}`);
             return false;
         }
     }
