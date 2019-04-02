@@ -9,6 +9,7 @@ const assert = require('assert');
 
 module.exports = class Wolf {
     constructor(config, shouldInit = true) {
+        logger.info('Wolf created... ');
         this.config = config;
         this.symbol = null; //meta information about trading pair
         this.ticker = null; //bid/ask prices updated per tick
@@ -29,7 +30,7 @@ module.exports = class Wolf {
     }
 
     async init(hunt = true) {
-
+        logger.info('Wolf initialization... ');
         //get trading pair information
         this.symbol = new Symbol({ tradingPair: this.config.tradingPair });
         await this.symbol.init();
@@ -79,10 +80,12 @@ module.exports = class Wolf {
 
     //digest the queue of open buy/sell orders
     async consume() {
+        logger.info('Consume invoked... ');
         const state = this.state;
         if (state.killed) return;
         if (state.consuming) return;
 
+        logger.info('Consuming... ');
         state.consuming = true;
         Wolf.LogStats({ queueCount: this.queue.meta.length, watchCount: this.watchlist.meta.length });
         const filledTransactions = await this.queue.digest();
@@ -133,6 +136,7 @@ module.exports = class Wolf {
     //push an unfilled limit purchase order to the queue
     async purchase(price) {
         try {
+            logger.info(`Purchase with price (${price})`);
             const symbol = this.symbol.meta;
             const tickSize = symbol.tickSize;  //minimum price difference you can trade by
             const priceSigFig = symbol.priceSigFig;
@@ -144,6 +148,7 @@ module.exports = class Wolf {
                 price: (price && price.toFixed(priceSigFig)) || (this.ticker.meta.ask).toFixed(priceSigFig)
             };
             const unconfirmedPurchase = await binance.order(buyOrder);
+            logger.debug(`${JSON.stringify(unconfirmedPurchase)}`);
             this.queue.push(unconfirmedPurchase);
             logger.info('Purchasing... ' + unconfirmedPurchase.symbol);
         } catch(err) {
@@ -155,6 +160,7 @@ module.exports = class Wolf {
     //push an unfilled limit sell order to the queue
     async sell(quantity, profit) {
         try {
+            logger.info(`Sell with quantity (${quantity}) and profit (${profit})`);
             const symbol = this.symbol.meta;
             const tickSize = symbol.tickSize;  //minimum price difference you can trade by
             const priceSigFig = symbol.priceSigFig;
@@ -176,6 +182,7 @@ module.exports = class Wolf {
 
     compound(side, price) {
         if (!this.config.compound) return;
+        logger.info(`Compound: side (${side}) and price (${price})`);
         if (side === 'BUY') this.state.netSpend -= price;
         if (side === 'SELL') this.state.netSpend += price;
         logger.info('Compounding...' + this.state.netSpend);
@@ -183,6 +190,7 @@ module.exports = class Wolf {
 
     async kill() {
         try {
+            logger.info(`Kill invoked`);
             this.state.killed = true;
             const meta = this.queue.meta;
             const queue = meta.queue;
