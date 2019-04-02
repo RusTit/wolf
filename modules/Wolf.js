@@ -26,7 +26,7 @@ module.exports = class Wolf {
         this.init();
     }
 
-    async init() {
+    async init(hunt = true) {
 
         //get trading pair information
         this.symbol = new Symbol({ tradingPair: this.config.tradingPair });
@@ -60,7 +60,9 @@ module.exports = class Wolf {
         //start watchlist
         this.watchlist.init();
 
-        this.hunt();
+        if (hunt) {
+            this.hunt();
+        }
     }
 
     //execute W.O.L.F
